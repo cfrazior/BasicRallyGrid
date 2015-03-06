@@ -6,7 +6,6 @@ Ext.define('CustomApp',
 
             this.filterContainer = Ext.create('Ext.container.Container',
                 {
-                    title: 'Equator Scrum of Scrums',
                     layout:
                     {
                         type: 'hbox',
@@ -15,24 +14,20 @@ Ext.define('CustomApp',
                 });
 
             this.add(this.filterContainer);
-            this._loadIterationSelection();            
+            this._loadReleaseSelection();
         },
-    
+
         // Load iteration combobox selector
-        _loadIterationSelection: function() {
-            this.iterationCombo = Ext.create('Rally.ui.combobox.IterationComboBox',
+        _loadReleaseSelection: function () {
+            this.iterationCombo = Ext.create('Rally.ui.combobox.ReleaseComboBox',
                 {
                     width: 300,
-                    fieldLabel: 'Iteration Filter:',
+                    fieldLabel: 'PI Filter:',
                     listeners: {
                         ready: function (combobox) {
-                            console.log('comboBox', combobox);
-                            console.log('comboBox selected = ', combobox.getRecord().get('_ref'));
                             this._loadData();
                         },
                         select: function (combobox, records) {
-                            console.log('comboBox', combobox);
-                            console.log('comboBox selected = ', combobox.getRecord().get('_ref'));
                             this._loadData();
                         },
                         scope: this
@@ -40,167 +35,225 @@ Ext.define('CustomApp',
                 });
 
             this.filterContainer.add(this.iterationCombo);
-        },      
-
-        _loadCustomIterationData: function (store, data) {
-            console.log('_loadCustomIterationData');
-            var iterations = [];
-            Ext.Array.each(data, function(iteration) {
-                console.log('ITERATION: ', iteration);
-                //var iteration = iteration.get()
-                var parent = iteration.get('Parent');               
-                var project = iteration.get('Project');
-
-                var s  = {
-                    Name: iteration.get('Name'),
-                    Notes: iteration.get('Notes'),
-                    Project: project.Name,
-                    Theme: iteration.get('Theme'),
-                    Rank: this._getProjectSortOrderRank(project.Name),
-                    Link: Rally.nav.Manager.getDetailUrl(iteration, this)
-                };
-                iterations.push(s);
-            },
-            this);
-            this._createCustomIterationStore(iterations);
-        },
-
-        _createCustomIterationStore: function (iterations) {
-            console.log('_createCustomIterationStore');
-            //if store exists, just load new data
-            this.iterationStore = Ext.create('Rally.data.custom.Store',
-                {
-                    data: iterations,
-                    pageSize: 100,
-                    sorters: [{ property: 'Rank', direction: 'ASC' }],
-                    listeners: {
-                        load: function (iterationStore, myData, success) {
-                                this._loadDataGrid();
-                        },
-                        scope: this
-                    }
-                })            
-        },
-
-        _loadDataGrid: function () {
-            if(this.myGrid)
-                this.remove(this.myGrid);
-            this.myGrid = Ext.create('Rally.ui.grid.Grid',
-                {
-                    store: this.iterationStore,
-                    columnCfgs: [
-                                { text: 'Project', dataIndex: 'Project', width: 200 },
-                                { text: 'Theme', dataIndex: 'Theme', width: 400, editor: 'rallytextfield' },
-                                { text: 'Notes', dataIndex: 'Notes', width: 400, editor: 'rallytextfield' },
-                                //{ text: 'Rank', dataIndex: 'Rank' },
-                                //{ text: 'Name', dataIndex: 'Name' },
-                                {   text: 'Edit',
-                                    dataIndex: 'Link',
-                                    renderer: function (value, m, r) {
-                                        var id = Ext.id();
-                                        Ext.defer(function() {
-                                            Ext.widget('button', {
-                                                renderTo: id,
-                                                text: 'Edit',
-                                                width: 50,
-                                                handler: function()
-                                                {
-                                                    window.location.href = value
-                                                }
-                                            });
-                                        }, 50);
-                                        return Ext.String.format('<div id="{0}"></div>', id);
-                                    }
-                                },],
-                    
-                    scope: this
-                });
-
-            this.add(this.myGrid);
         },
 
         // Get Data From Rally
         _loadData: function () {
 
-            console.log('_loadData');
-
-            var selectedIteration = this.iterationCombo.getRecord().get('Name');
-            var myFilters = [{ property: 'Name', operation: '=', value: selectedIteration }];
-        
-            console.log('myFilters: ', myFilters)
-
+            this.iterations = [];
             this.userStoryStore = Ext.create('Rally.data.wsapi.Store',
                 {
-                    model: 'Iteration',
+                    model: 'User Story',
                     autoLoad: true,
-                    filters: myFilters,
+                    sorters: [{ property: 'Iteration', direction: 'ASC' }],
                     listeners:
                     {
-                        load: function (userStoryStore, myData, success) {                          
-                                this._loadCustomIterationData(userStoryStore, myData);
-                            },
+                        load: function (userStoryStore, myData, success) {
+                            this._sumData(userStoryStore, myData);
+                        },
                         scope: this
                     },
-                    fetch: ['Name', 'Notes', 'Project', 'Theme']
+                    fetch: ['FormattedID', 'Owner', 'Name', 'ScheduleState', 'Iteration', 'PlanEstimate', 'AcceptedDate', 'Release']
                 });
         },
 
-    
-        _sorterFunction: function (o1, o2) {
-            console.log('_sorterFunction');
+        _sumData: function (store, data) {
+            var totalPoints = 0;
+            var acceptedPoints = 0;
+            var iteration;
+            var selectedRelease = this.iterationCombo.getRecord().get('Name');
 
-            rank1 = this._getProjectSortOrderRank(o1),
-            rank2 = this._getProjectSortOrderRank(o2);
+            // Loop through stories sorted by iteration
+            Ext.Array.each(data, function (story) {
+                if (story.get('Iteration')) {
+                    // Save off the current Iteration
+                    var it = story.get('Iteration');
 
-            if (rank1 === rank2) {
-                return 0;
-            }
+                    // Check if an iteration was assigned to the story. If not, skip it.
+                    var result = this._matchIterationWithRelease(selectedRelease, it.Name);
+                    if (result) {
+                        // If the iteration is undefined that means it's the first time through.
+                        if (!iteration) {
+                            iteration = it.Name;
+                            totalPoints = totalPoints + story.get('PlanEstimate');
+                            if (story.get('AcceptedDate')) {
+                                acceptedPoints = acceptedPoints + story.get('PlanEstimate');
+                            }
+                        }
+                            // if the iteration is the same as the last time through keep adding up
+                        else if (iteration) {
+                            if (iteration == it.Name) {
+                                totalPoints = totalPoints + story.get('PlanEstimate');
+                                if (story.get('AcceptedDate')) {
+                                    acceptedPoints = acceptedPoints + story.get('PlanEstimate');
+                                }
+                            }
+                                // if the iteration is different. Save off the last values we had in the array
+                                // then clear all counters
+                                // then add up values
+                            else {
+                                summary = {
+                                    Iteration: iteration,
+                                    PlanEstimate: totalPoints,
+                                    AcceptedPoints: acceptedPoints,
+                                    SDR: acceptedPoints / totalPoints
+                                };
+                                this.iterations.push(summary);
 
-            return rank1 < rank2 ? -1 : 1;
+                                totalPoints = 0;
+                                acceptedPoints = 0;
+                                iteration = it.Name;
+                                totalPoints = totalPoints + story.get('PlanEstimate');
+                                if (story.get('AcceptedDate')) {
+                                    acceptedPoints = acceptedPoints + story.get('PlanEstimate');
+                                }
+                            }
+                        }
+                    }
+                }
+            }, this);
+
+            // Last Time out ... record the last sprint in the iteration
+            summary = {
+                Iteration: iteration,
+                PlanEstimate: totalPoints,
+                AcceptedPoints: acceptedPoints,
+                SDR: acceptedPoints / totalPoints
+            };
+            this.iterations.push(summary);
+            this._createCustomIterationStore();
         },
 
-        _getProjectSortOrderRank: function(projectName)
-        {
-            console.log('_getProjectSortOrderRank');
-
-            if (projectName === 'Intently Remote (CPM 1)') {
-                return 1;
-            } else if (projectName === 'Phoenix (CPM2)') {
-                return 2;
-            } else if (projectName === 'Acorns') {
-                return 3;
-            } else if (projectName === 'Gaudi') {
-                return 4;
-            } else if (projectName === 'Big Al\'s') {
-                return 5;
-            } else if (projectName === 'Mr Sips (Imaging 1- ATL)') {
-                return 6;
-            } else if (projectName === 'No Land+In Sight') {
-                return 7;
-            } else if (projectName === '2D Frutti (Imaging 3)') {
-                return 8;
-            } else if (projectName === 'Dragons Layers (IFW 1)') {
-                return 9;
-            } else if (projectName === 'Grafica') {
-                return 10;
-            } else if (projectName === 'SkyNet') {
-                return 11;
-            } else {
-                return 13;
-            }
+        // Create a custom store to hold our custom data set
+        _createCustomIterationStore: function () {
+            this.iterationStore = Ext.create('Rally.data.custom.Store',
+                {
+                    data: this.iterations,
+                    pageSize: 100,
+                    listeners: {
+                        load: function (iterationStore, myData, success) {
+                            this._loadGrid(iterationStore);
+                        },
+                        scope: this
+                    },
+                    scope: this
+                });
         },
 
         // Create and Show a Grid of given stories
         _loadGrid: function (store) {
-            console.log('_loadGrid');
+
+            // Remove Grid before replacing it with updated version based on filter selection 
+            this.remove(this.myGrid);
+
             this.myGrid = Ext.create('Rally.ui.grid.Grid',
                 {
+                    height: 250,
                     store: store,
-                    columnCfgs: ['Project', 'Notes', 'Theme']
+                    columnCfgs: [
+                        { text: 'Iteration', dataIndex: 'Iteration' },
+                        { text: 'Estimate', dataIndex: 'PlanEstimate' },
+                        { text: 'Actual', dataIndex: 'AcceptedPoints' },
+                        {
+                            text: 'SDR', dataIndex: 'SDR', renderer: function (value, m, r) {
+                                var id = Ext.id();
+                                Ext.defer(function () {
+                                    Ext.create('Ext.Container', {
+                                        items: [{ xtype: 'rallypercentdone', percentDone: value }],
+                                        renderTo: id
+                                    });
+                                }, 50);
+                                return Ext.String.format('<div id="{0}"></div>', id);
+                            }
+                        }
+                    ],
+                    scope: this,
+                    resizable: true
                 });
 
+            // Add Grid to the APP container
             this.add(this.myGrid);
+        },
+
+        // Since Release gets cleared if a story isn't completed we need to filter based on Iteration ... even though we want to use a "Release" filter.
+        // By matching up Iterations to their Releases we'll be able to accomplish this.
+        // NOTE: Should see if there is a better way to do this so it's automatically extensible.
+        _matchIterationWithRelease: function (release, iteration) {
+            if (release.indexOf('EQ') != -1) {
+                if (iteration.indexOf('EQ') == -1)
+                    return false;
+                else {
+                    if (release.indexOf('1') != -1) {
+                        if (iteration.indexOf('1.') != -1)
+                            return true;
+                        else
+                            return false;
+                    }
+                    else if (release.indexOf('2') != -1) {
+                        if (iteration.indexOf('2.') != -1)
+                            return true;
+                        else
+                            return false;
+                    }
+                    else if (release.indexOf('3') != -1) {
+                        if (iteration.indexOf('3.') != -1)
+                            return true;
+                        else
+                            return false;
+                    }
+                }
+            }
+            else if (release.indexOf('OIS') != -1) {
+                if (iteration.indexOf('OIS') == -1)
+                    return false;
+                else {
+                    if (release.indexOf('1') != -1) {
+                        if (iteration.indexOf('1.') != -1)
+                            return true;
+                        else
+                            return false;
+                    }
+                    else if (release.indexOf('2') != -1) {
+                        if (iteration.indexOf('2.') != -1)
+                            return true;
+                        else
+                            return false;
+                    }
+                    else if (release.indexOf('3') != -1) {
+                        if (iteration.indexOf('3.') != -1)
+                            return true;
+                        else
+                            return false;
+                    }
+                }
+            }
+            else if (release.indexOf('KM') != -1) {
+                if (iteration.indexOf('KM') == -1)
+                    return false;
+                else {
+                    if (release.indexOf('1') != -1) {
+                        if (iteration.indexOf('1.') != -1)
+                            return true;
+                        else
+                            return false;
+                    }
+                    else if (release.indexOf('2') != -1) {
+                        if (iteration.indexOf('2.') != -1)
+                            return true;
+                        else
+                            return false;
+                    }
+                    else if (release.indexOf('3') != -1) {
+                        if (iteration.indexOf('3.') != -1)
+                            return true;
+                        else
+                            return false;
+                    }
+                }
+            }
+            return false;
         }
+
         //API Docs: https://help.rallydev.com/apps/2.0/doc/
     });
 

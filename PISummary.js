@@ -6,7 +6,6 @@ Ext.define('CustomApp',
 
             this.filterContainer = Ext.create('Ext.container.Container',
                 {
-                    title: 'Equator Scrum of Scrums',
                     layout:
                     {
                         type: 'hbox',
@@ -15,20 +14,24 @@ Ext.define('CustomApp',
                 });
 
             this.add(this.filterContainer);
-            this._loadIterationSelection();            
+            this._loadReleaseSelection();            
         },
     
         // Load iteration combobox selector
-        _loadIterationSelection: function() {
-            this.iterationCombo = Ext.create('Rally.ui.combobox.IterationComboBox',
+        _loadReleaseSelection: function () {
+            this.iterationCombo = Ext.create('Rally.ui.combobox.ReleaseComboBox',
                 {
                     width: 300,
-                    fieldLabel: 'Iteration Filter:',
+                    fieldLabel: 'PI Filter:',
                     listeners: {
                         ready: function (combobox) {
+                            console.log('comboBox', combobox);
+                            console.log('comboBox selected = ', combobox.getRecord().get('_ref'));
                             this._loadData();
                         },
                         select: function (combobox, records) {
+                            console.log('comboBox', combobox);
+                            console.log('comboBox selected = ', combobox.getRecord().get('_ref'));
                             this._loadData();
                         },
                         scope: this
@@ -37,32 +40,6 @@ Ext.define('CustomApp',
 
             this.filterContainer.add(this.iterationCombo);
         },      
-
-        // Get Data From Rally
-        _loadData: function () {
-
-            console.log('_loadData');
-
-            var selectedIteration = this.iterationCombo.getRecord().get('Name');
-            var myFilters = [{ property: 'Name', operation: '=', value: selectedIteration }];
-
-            console.log('myFilters: ', myFilters)
-
-            this.userStoryStore = Ext.create('Rally.data.wsapi.Store',
-                {
-                    model: 'Iteration',
-                    autoLoad: true,
-                    filters: myFilters,
-                    listeners:
-                    {
-                        load: function (userStoryStore, myData, success) {
-                            this._loadCustomIterationData(userStoryStore, myData);
-                        },
-                        scope: this
-                    },
-                    fetch: ['Name', 'Notes', 'Project', 'Theme']
-                });
-        },
 
         _loadCustomIterationData: function (store, data) {
             console.log('_loadCustomIterationData');
@@ -141,8 +118,93 @@ Ext.define('CustomApp',
             this.add(this.myGrid);
         },
 
+        // Get Data From Rally
+        _loadData: function () {
 
+            console.log('_loadData');
 
+            var selectedRelease = this.iterationCombo.getRecord().get('Name');
+            var myFilters = [{ property: 'Name', operation: '=', value: selectedRelease }];
+        
+            console.log('myFilters: ', myFilters)
+
+            this.releaseStore = Ext.create('Rally.data.wsapi.Store',
+                {
+                    model: 'Release',
+                    autoLoad: true,
+                    filters: myFilters,
+                    listeners:
+                    {
+                        load: function (releaseStore, myData, success) {
+                            this._loadCustomIterationData(releaseStore, myData);
+                            },
+                        scope: this
+                    },
+                    fetch: ['Name', 'Notes', 'Project', 'Theme']
+                });
+        },
+
+        _getUserStoryData: function() {
+            var selectedRelease = this.iterationCombo.getRecord().get('Name');
+            var myFilters = [{ property: 'Name', operation: '=', value: selectedRelease }];
+
+            this.userStoryStore = Ext.create('Rally.data.wsapi.Store',
+                {
+                    model: 'User Story',
+                    autoLoad: true,
+                    filters: myFilters,
+                    //listeners:
+                    fetch: ['Name']
+                });
+
+        },
+
+        _getFeatureData: function () {
+            var selectedRelease = this.iterationCombo.getRecord().get('Name');
+            var myFilters = [{ property: 'Name', operation: '=', value: selectedRelease }];
+
+            this.userStoryStore = Ext.create('Rally.data.wsapi.Store',
+                {
+                    model: 'Feature',
+                    autoLoad: true,
+                    filters: myFilters,
+                    //listeners:
+                    fetch: ['Name']
+                });
+
+        },
+
+        _createCustomData: function(store, data, type)
+        {
+            if (!this.piSummaryData)
+                this.piSummaryData = [];
+
+            if (type = 'UserStory') {
+                Ext.Array.each(data, function (piData) {
+                    console.log('ITERATION: ', piSummaryData);
+                    //var iteration = iteration.get()
+                    var parent = piData.get('Parent');
+                    var project = piData.get('Project');
+
+                    var s = {
+                        StoryName: piData.get('Name'),
+                        Notes: piData.get('Notes'),
+                        Project: project.Name,
+                        Theme: piData.get('Theme'),
+                        Rank: this._getProjectSortOrderRank(project.Name),
+                        Link: Rally.nav.Manager.getDetailUrl(iteration, this)
+                    };
+                    iterations.push(s);
+                },
+                this);
+            }
+            else if (type = 'Feature')
+            {
+
+            }
+
+            this._createCustomIterationStore(iterations);
+        },
     
         _sorterFunction: function (o1, o2) {
             console.log('_sorterFunction');

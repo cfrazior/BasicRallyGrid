@@ -1,13 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>BasicRallyGrid</title>
-
-    <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
-
-    <script type="text/javascript">
-        Rally.onReady(function () {
-                Ext.define('CustomApp',
+Ext.define('CustomApp',
     {
         extend: 'Rally.app.App',
         componentCls: 'app',
@@ -57,8 +48,9 @@
                     sorters: [{ property: 'Iteration', direction: 'ASC' }],
                     listeners:
                     {
-                        load: function (userStoryStore, myData, success) {
-                            this._sumData(userStoryStore, myData);
+                        load: function (userStoryStore, myData, success)
+                        {
+                            this._sumData(userStoryStore, myData);                                
                         },
                         scope: this
                     },
@@ -73,34 +65,42 @@
             var selectedRelease = this.iterationCombo.getRecord().get('Name');
 
             // Loop through stories sorted by iteration
-            Ext.Array.each(data, function (story) {
-                if (story.get('Iteration')) {
+            Ext.Array.each(data, function (story)
+            {             
+                if (story.get('Iteration'))
+                {
                     // Save off the current Iteration
                     var it = story.get('Iteration');
-
+                    
                     // Check if an iteration was assigned to the story. If not, skip it.
                     var result = this._matchIterationWithRelease(selectedRelease, it.Name);
-                    if (result) {
+                    if (result)
+                    {
                         // If the iteration is undefined that means it's the first time through.
-                        if (!iteration) {
+                        if (!iteration)
+                        {
                             iteration = it.Name;
                             totalPoints = totalPoints + story.get('PlanEstimate');
-                            if (story.get('AcceptedDate')) {
+                            if (story.get('AcceptedDate'))
+                            {
                                 acceptedPoints = acceptedPoints + story.get('PlanEstimate');
                             }
                         }
-                            // if the iteration is the same as the last time through keep adding up
-                        else if (iteration) {
+                        // if the iteration is the same as the last time through keep adding up
+                        else if (iteration)
+                        {
                             if (iteration == it.Name) {
                                 totalPoints = totalPoints + story.get('PlanEstimate');
-                                if (story.get('AcceptedDate')) {
+                                if (story.get('AcceptedDate'))
+                                {
                                     acceptedPoints = acceptedPoints + story.get('PlanEstimate');
                                 }
                             }
-                                // if the iteration is different. Save off the last values we had in the array
-                                // then clear all counters
-                                // then add up values
-                            else {
+                            // if the iteration is different. Save off the last values we had in the array
+                            // then clear all counters
+                            // then add up values
+                            else
+                            {
                                 summary = {
                                     Iteration: iteration,
                                     PlanEstimate: totalPoints,
@@ -113,7 +113,8 @@
                                 acceptedPoints = 0;
                                 iteration = it.Name;
                                 totalPoints = totalPoints + story.get('PlanEstimate');
-                                if (story.get('AcceptedDate')) {
+                                if (story.get('AcceptedDate'))
+                                {
                                     acceptedPoints = acceptedPoints + story.get('PlanEstimate');
                                 }
                             }
@@ -140,7 +141,7 @@
                     data: this.iterations,
                     pageSize: 100,
                     listeners: {
-                        load: function (iterationStore, myData, success) {
+                        load: function(iterationStore, myData, success) {
                             this._loadGrid(iterationStore);
                         },
                         scope: this
@@ -151,7 +152,7 @@
 
         // Create and Show a Grid of given stories
         _loadGrid: function (store) {
-
+            
             // Remove Grid before replacing it with updated version based on filter selection 
             this.remove(this.myGrid);
 
@@ -165,11 +166,10 @@
                         { text: 'Actual', dataIndex: 'AcceptedPoints' },
                         {
                             text: 'SDR', dataIndex: 'SDR', renderer: function (value, m, r) {
-                                var id = Ext.id();
+                                var id = Ext.id();                                
                                 Ext.defer(function () {
-                                    Ext.create('Ext.Container', {
-                                        items: [{ xtype: 'rallypercentdone', percentDone: value }],
-                                        renderTo: id
+                                    Ext.create('Ext.Container', { items: [{ xtype: 'rallypercentdone', percentDone: value }],
+                                        renderTo:id                                       
                                     });
                                 }, 50);
                                 return Ext.String.format('<div id="{0}"></div>', id);
@@ -187,11 +187,14 @@
         // Since Release gets cleared if a story isn't completed we need to filter based on Iteration ... even though we want to use a "Release" filter.
         // By matching up Iterations to their Releases we'll be able to accomplish this.
         // NOTE: Should see if there is a better way to do this so it's automatically extensible.
-        _matchIterationWithRelease: function (release, iteration) {
-            if (release.indexOf('EQ') != -1) {
+        _matchIterationWithRelease: function (release, iteration)
+        {
+            if (release.indexOf('EQ') != -1)
+            {
                 if (iteration.indexOf('EQ') == -1)
                     return false;
-                else {
+                else
+                {
                     if (release.indexOf('1') != -1) {
                         if (iteration.indexOf('1.') != -1)
                             return true;
@@ -212,10 +215,12 @@
                     }
                 }
             }
-            else if (release.indexOf('OIS') != -1) {
+            else if (release.indexOf('OIS') != -1)
+            {
                 if (iteration.indexOf('OIS') == -1)
                     return false;
-                else {
+                else
+                {
                     if (release.indexOf('1') != -1) {
                         if (iteration.indexOf('1.') != -1)
                             return true;
@@ -236,10 +241,12 @@
                     }
                 }
             }
-            else if (release.indexOf('KM') != -1) {
+            else if (release.indexOf('KM') != -1)
+            {
                 if (iteration.indexOf('KM') == -1)
                     return false;
-                else {
+                else
+                {
                     if (release.indexOf('1') != -1) {
                         if (iteration.indexOf('1.') != -1)
                             return true;
@@ -262,29 +269,7 @@
             }
             return false;
         }
-
+        
         //API Docs: https://help.rallydev.com/apps/2.0/doc/
     });
 
-
-
-            Rally.launchApp('CustomApp', {
-                name:"BasicRallyGrid",
-	            parentRepos:""
-            });
-
-        });
-    </script>
-
-
-
-    <style type="text/css">
-        .app {
-  /* Add app styles here */
-}
-
-    </style>
-</head>
-<body>
-</body>
-</html>
