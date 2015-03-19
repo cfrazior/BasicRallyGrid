@@ -2,6 +2,9 @@ Ext.define('CustomApp',
     {
         extend: 'Rally.app.App',
         componentCls: 'app',
+        autoscroll: false,
+        resizable: false,
+        shrinkWrap: 3,
         launch: function () {
 
             this.filterContainer = Ext.create('Ext.container.Container',
@@ -99,11 +102,11 @@ Ext.define('CustomApp',
             
             this.myGrid = Ext.create('Rally.ui.grid.Grid',
                 {
-                    width: 935,
+                    width: 1275,
                     store: this.iterationStore,
                     columnCfgs: [
-                                { text: 'Sprint Goals', dataIndex: 'Theme', width: 400, editor: 'rallytextfield' },
-                                { text: 'Risks/Issues', dataIndex: 'Notes', width: 400, editor: 'rallytextfield' },
+                                { text: 'Sprint Goals', dataIndex: 'Theme', width: 575, editor: 'rallytextfield' },
+                                { text: 'Risks/Issues', dataIndex: 'Notes', width: 575, editor: 'rallytextfield' },
                                 {
                                     text: 'Edit',
                                     dataIndex: 'Link',

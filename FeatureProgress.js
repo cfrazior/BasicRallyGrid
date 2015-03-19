@@ -14,36 +14,37 @@ Ext.define('CustomApp',
                 });
 
             this.add(this.filterContainer);
-            this._loadIterationSelection();
+            this._loadReleaseSelection();
             
         },
     
         // Load iteration combobox selector
-        _loadIterationSelection: function() {
-            this.iterationCombo = Ext.create('Rally.ui.combobox.IterationComboBox',
-                {                    
+        _loadReleaseSelection: function () {
+            this.iterationCombo = Ext.create('Rally.ui.combobox.ReleaseComboBox',
+                {
+                    width: 300,
+                    fieldLabel: 'PI Filter:',
                     listeners: {
                         ready: function (combobox) {
-                            console.log('comboBox', combobox);
-                            console.log('comboBox selected = ', combobox.getRecord().get('_ref'));
                             this._loadData();
                         },
                         select: function (combobox, records) {
-                            console.log('comboBox', combobox);
-                            console.log('comboBox selected = ', combobox.getRecord().get('_ref'));
                             this._loadData();
                         },
                         scope: this
                     }
                 });
+
             this.filterContainer.add(this.iterationCombo);
         },
 
         // Get Data From Rally
         _loadData: function() {
-            var selectedIteration = this.iterationCombo.getRecord().get('_ref');
 
-            var myFilters = [{ property: 'Iteration', operation: '=', value: selectedIteration }];
+            var selectedRelease = this.iterationCombo.getRecord().get('Name');
+            var myFilters = [{ property: 'Release', operation: '=', value: selectedRelease }];
+
+            console.log('selectedRelease: ', selectedRelease);
 
             //if store exists, just load new data
             if (this.userStoryStore) {

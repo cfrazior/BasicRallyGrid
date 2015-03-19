@@ -50,8 +50,8 @@ Ext.define('CustomApp',
                     project: Rally.util.Ref.getRelativeUri(this.getContext().getProject()),
                     projectScopeUp: this.getContext().getProjectScopeUp(),
                     projectScopeDown: this.getContext().getProjectScopeDown(),
-                    width: 800,
-                    height: 600,
+                    width: 475,
+                    height: 475,
                     reportConfig: {
                         report: Rally.ui.report.StandardReport.Reports.IterationBurndown,
                         iterations: [selectedIteration]

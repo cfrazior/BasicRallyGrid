@@ -64,7 +64,7 @@ Ext.define('CustomApp',
         _loadCustomIterationData: function (store, data) {
             var iterations = [];
             Ext.Array.each(data, function (iteration) {
-                
+
                 var project = iteration.get('Project');
 
                 var s = {
@@ -79,7 +79,7 @@ Ext.define('CustomApp',
             },
             this);
             this._createCustomIterationStore(iterations);
-        },        
+        },
 
         // Create a store that will be used to populate the Grid
         _createCustomIterationStore: function (iterations) {
@@ -111,7 +111,7 @@ Ext.define('CustomApp',
 
             return filter;
         },
-        
+
         _loadDataGrid: function () {
             if (this.myGrid)
                 this.remove(this.myGrid);
@@ -149,7 +149,7 @@ Ext.define('CustomApp',
 
         // Assign a "Rank" value that we can use to sort by
         _getProjectSortOrderRank: function (projectName) {
-            console.log('projectName', projectName);
+
             if (projectName === 'El Cartel Importante') {
                 return 1;
             } else if (projectName === 'Medicated') {

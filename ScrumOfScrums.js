@@ -15,11 +15,11 @@ Ext.define('CustomApp',
                 });
 
             this.add(this.filterContainer);
-            this._loadIterationSelection();            
+            this._loadIterationSelection();
         },
-    
+
         // Load iteration combobox selector
-        _loadIterationSelection: function() {
+        _loadIterationSelection: function () {
             this.iterationCombo = Ext.create('Rally.ui.combobox.IterationComboBox',
                 {
                     width: 300,
@@ -36,17 +36,13 @@ Ext.define('CustomApp',
                 });
 
             this.filterContainer.add(this.iterationCombo);
-        },      
+        },
 
-        // Get Data From Rally
+        // Get Iteration Data From Rally
         _loadData: function () {
-
-            console.log('_loadData');
 
             var selectedIteration = this.iterationCombo.getRecord().get('Name');
             var myFilters = [{ property: 'Name', operation: '=', value: selectedIteration }];
-
-            console.log('myFilters: ', myFilters)
 
             this.userStoryStore = Ext.create('Rally.data.wsapi.Store',
                 {
@@ -64,16 +60,14 @@ Ext.define('CustomApp',
                 });
         },
 
+        // Create array containing custom columns. This will become the data we add to our custom iteration store
         _loadCustomIterationData: function (store, data) {
-            console.log('_loadCustomIterationData');
             var iterations = [];
-            Ext.Array.each(data, function(iteration) {
-                console.log('ITERATION: ', iteration);
-                //var iteration = iteration.get()
-                var parent = iteration.get('Parent');               
+            Ext.Array.each(data, function (iteration) {
+
                 var project = iteration.get('Project');
 
-                var s  = {
+                var s = {
                     Name: iteration.get('Name'),
                     Notes: iteration.get('Notes'),
                     Project: project.Name,
@@ -87,9 +81,8 @@ Ext.define('CustomApp',
             this._createCustomIterationStore(iterations);
         },
 
+        // Create a store that will be used to populate the Grid
         _createCustomIterationStore: function (iterations) {
-            console.log('_createCustomIterationStore');
-            //if store exists, just load new data
             this.iterationStore = Ext.create('Rally.data.custom.Store',
                 {
                     data: iterations,
@@ -97,15 +90,15 @@ Ext.define('CustomApp',
                     sorters: [{ property: 'Rank', direction: 'ASC' }],
                     listeners: {
                         load: function (iterationStore, myData, success) {
-                                this._loadDataGrid();
+                            this._loadDataGrid();
                         },
                         scope: this
                     }
-                })            
+                });
         },
 
         _loadDataGrid: function () {
-            if(this.myGrid)
+            if (this.myGrid)
                 this.remove(this.myGrid);
             this.myGrid = Ext.create('Rally.ui.grid.Grid',
                 {
@@ -114,53 +107,32 @@ Ext.define('CustomApp',
                                 { text: 'Project', dataIndex: 'Project', width: 200 },
                                 { text: 'Theme', dataIndex: 'Theme', width: 400, editor: 'rallytextfield' },
                                 { text: 'Notes', dataIndex: 'Notes', width: 400, editor: 'rallytextfield' },
-                                //{ text: 'Rank', dataIndex: 'Rank' },
-                                //{ text: 'Name', dataIndex: 'Name' },
-                                {   text: 'Edit',
+                                {
+                                    text: 'Edit',
                                     dataIndex: 'Link',
                                     renderer: function (value, m, r) {
                                         var id = Ext.id();
-                                        Ext.defer(function() {
+                                        Ext.defer(function () {
                                             Ext.widget('button', {
                                                 renderTo: id,
                                                 text: 'Edit',
                                                 width: 50,
-                                                handler: function()
-                                                {
-                                                    window.location.href = value
+                                                handler: function () {
+                                                    window.location.href = value;
                                                 }
                                             });
                                         }, 50);
                                         return Ext.String.format('<div id="{0}"></div>', id);
                                     }
-                                },],
-                    
+                                }],
                     scope: this
                 });
 
             this.add(this.myGrid);
         },
 
-
-
-    
-        _sorterFunction: function (o1, o2) {
-            console.log('_sorterFunction');
-
-            rank1 = this._getProjectSortOrderRank(o1),
-            rank2 = this._getProjectSortOrderRank(o2);
-
-            if (rank1 === rank2) {
-                return 0;
-            }
-
-            return rank1 < rank2 ? -1 : 1;
-        },
-
-        _getProjectSortOrderRank: function(projectName)
-        {
-            console.log('_getProjectSortOrderRank');
-
+        // Assign a "Rank" value that we can use to sort by
+        _getProjectSortOrderRank: function (projectName) {
             if (projectName === 'Intently Remote (CPM 1)') {
                 return 1;
             } else if (projectName === 'Phoenix (CPM2)') {
@@ -181,8 +153,10 @@ Ext.define('CustomApp',
                 return 9;
             } else if (projectName === 'Grafica') {
                 return 10;
-            } else if (projectName === 'SkyNet') {
+            } else if (projectName === 'Naboo') {
                 return 11;
+            } else if (projectName === 'SkyNet') {
+                return 12;
             } else {
                 return 13;
             }
@@ -190,7 +164,7 @@ Ext.define('CustomApp',
 
         // Create and Show a Grid of given stories
         _loadGrid: function (store) {
-            console.log('_loadGrid');
+
             this.myGrid = Ext.create('Rally.ui.grid.Grid',
                 {
                     store: store,
