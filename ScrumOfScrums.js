@@ -73,6 +73,7 @@ Ext.define('CustomApp',
                     Project: project.Name,
                     Theme: iteration.get('Theme'),
                     Rank: this._getProjectSortOrderRank(project.Name),
+                    Group: this._getProjectGroupToFilterBy(project.Name),
                     Link: Rally.nav.Manager.getDetailUrl(iteration, this)
                 };
                 iterations.push(s);
@@ -87,6 +88,7 @@ Ext.define('CustomApp',
                 {
                     data: iterations,
                     pageSize: 100,
+                    filters: [{ property: 'Group', operator: '=', value: '1' }],
                     sorters: [{ property: 'Rank', direction: 'ASC' }],
                     listeners: {
                         load: function (iterationStore, myData, success) {
@@ -105,8 +107,8 @@ Ext.define('CustomApp',
                     store: this.iterationStore,
                     columnCfgs: [
                                 { text: 'Project', dataIndex: 'Project', width: 200 },
-                                { text: 'Theme', dataIndex: 'Theme', width: 400, editor: 'rallytextfield' },
-                                { text: 'Notes', dataIndex: 'Notes', width: 400, editor: 'rallytextfield' },
+                                { text: 'Theme', dataIndex: 'Theme', width: 525, editor: 'rallytextfield' },
+                                { text: 'Notes', dataIndex: 'Notes', width: 525, editor: 'rallytextfield' },
                                 {
                                     text: 'Edit',
                                     dataIndex: 'Link',
@@ -150,16 +152,60 @@ Ext.define('CustomApp',
             } else if (projectName === '2D Frutti (Imaging 3)') {
                 return 8;
             } else if (projectName === 'Dragons Layers (IFW 1)') {
-                return 9;
-            } else if (projectName === 'Grafica') {
                 return 10;
-            } else if (projectName === 'Naboo') {
+            } else if (projectName === 'Grafica') {
                 return 11;
-            } else if (projectName === 'SkyNet') {
+            } else if (projectName === 'Naboo (TDC 1)') {
                 return 12;
-            } else {
+            } else if (projectName === 'SkyNet') {
                 return 13;
+            } else {
+                return 99;
             }
+        },
+
+        // Assign a "Group" value that we can use to filter by
+        _getProjectGroupToFilterBy: function (projectName) {
+            if (projectName === 'Intently Remote (CPM 1)') {
+                return 1;
+            } else if (projectName === 'Phoenix (CPM2)') {
+                return 1;
+            } else if (projectName === 'Acorns') {
+                return 1;
+            } else if (projectName === 'Gaudi') {
+                return 1;
+            } else if (projectName === 'Big Al\'s') {
+                return 1;
+            } else if (projectName === 'Mr Sips (Imaging 1- ATL)') {
+                return 1;
+            } else if (projectName === 'No Land+In Sight') {
+                return 1;
+            } else if (projectName === '2D Frutti (Imaging 3)') {
+                return 1;
+            } else if (projectName === 'Dragons Layers (IFW 1)') {
+                return 1;
+            } else if (projectName === 'Grafica') {
+                return 1;
+            } else if (projectName === 'Naboo (TDC 1)') {
+                return 1;
+            } else if (projectName === 'SkyNet') {
+                return 1;
+            } else {
+                return 2;
+            }
+        },
+
+        // Filter noise out of list. That is, any "Projects" not included in the SoS.
+        _createFilters: function () {
+
+            var filter = Ext.create('Rally.data.QueryFilter',
+            {
+                property: 'Rank',
+                operator: '==',
+                value: '1'
+            });
+
+            return filter;
         },
 
         // Create and Show a Grid of given stories
