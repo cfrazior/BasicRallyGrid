@@ -107,8 +107,8 @@ Ext.define('CustomApp',
                     store: this.iterationStore,
                     columnCfgs: [
                                 { text: 'Project', dataIndex: 'Project', width: 200 },
-                                { text: 'Theme', dataIndex: 'Theme', width: 525, editor: 'rallytextfield' },
-                                { text: 'Notes', dataIndex: 'Notes', width: 525, editor: 'rallytextfield' },
+                                { text: 'Theme', dataIndex: 'Theme', width: 400, editor: 'rallytextfield' },
+                                { text: 'Notes', dataIndex: 'Notes', width: 400, editor: 'rallytextfield' },
                                 {
                                     text: 'Edit',
                                     dataIndex: 'Link',
@@ -157,7 +157,7 @@ Ext.define('CustomApp',
                 return 11;
             } else if (projectName === 'Naboo (TDC 1)') {
                 return 12;
-            } else if (projectName === 'SkyNet') {
+            } else if (projectName === 'Skynet') {
                 return 13;
             } else {
                 return 99;
@@ -188,7 +188,7 @@ Ext.define('CustomApp',
                 return 1;
             } else if (projectName === 'Naboo (TDC 1)') {
                 return 1;
-            } else if (projectName === 'SkyNet') {
+            } else if (projectName === 'Skynet') {
                 return 1;
             } else {
                 return 2;

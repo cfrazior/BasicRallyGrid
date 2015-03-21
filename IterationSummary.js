@@ -9,7 +9,7 @@ Ext.define('CustomApp',
 
             this.filterContainer = Ext.create('Ext.container.Container',
                 {
-                    title: 'Equator Scrum of Scrums',
+                    title: 'Iteration Summary',
                     layout:
                     {
                         type: 'hbox',
@@ -54,8 +54,7 @@ Ext.define('CustomApp',
                     filters: myFilters,
                     listeners:
                     {
-                        load: function (userStoryStore, myData, success)
-                        {
+                        load: function (userStoryStore, myData, success) {
                             this._loadCustomIterationData(userStoryStore, myData);
                         },
                         scope: this
@@ -66,8 +65,7 @@ Ext.define('CustomApp',
 
         _loadCustomIterationData: function (store, data) {
             var iterations = [];
-            Ext.Array.each(data, function (iteration)
-            {
+            Ext.Array.each(data, function (iteration) {
                 var project = iteration.get('Project');
                 var s = {
                     Name: iteration.get('Name'),
@@ -77,7 +75,7 @@ Ext.define('CustomApp',
                     Link: Rally.nav.Manager.getDetailUrl(iteration, this)
                 };
                 iterations.push(s);
-            },this);
+            }, this);
             this._createCustomIterationStore(iterations);
         },
 
@@ -87,8 +85,7 @@ Ext.define('CustomApp',
                     data: iterations,
                     pageSize: 100,
                     listeners: {
-                        load: function (iterationStore, myData, success)
-                        {
+                        load: function (iterationStore, myData, success) {
                             this._loadDataGrid();
                         },
                         scope: this
@@ -99,14 +96,14 @@ Ext.define('CustomApp',
         _loadDataGrid: function () {
             if (this.myGrid)
                 this.remove(this.myGrid);
-            
+
             this.myGrid = Ext.create('Rally.ui.grid.Grid',
                 {
                     width: 1275,
                     store: this.iterationStore,
                     columnCfgs: [
-                                { text: 'Sprint Goals', dataIndex: 'Theme', width: 575, editor: 'rallytextfield' },
-                                { text: 'Risks/Issues', dataIndex: 'Notes', width: 575, editor: 'rallytextfield' },
+                                { text: 'Sprint Goals', dataIndex: 'Theme', width: 400, editor: 'rallytextfield' },
+                                { text: 'Risks/Issues', dataIndex: 'Notes', width: 400, editor: 'rallytextfield' },
                                 {
                                     text: 'Edit',
                                     dataIndex: 'Link',
@@ -118,8 +115,7 @@ Ext.define('CustomApp',
                                                 renderTo: id,
                                                 text: 'Edit',
                                                 width: 50,
-                                                handler: function ()
-                                                {
+                                                handler: function () {
                                                     window.location.href = value;
                                                 }
                                             });
